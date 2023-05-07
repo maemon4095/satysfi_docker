@@ -24,7 +24,7 @@ RUN $HOME/.cargo/bin/cargo install --git https://github.com/monaqa/satysfi-langu
 # install fonts
 ## install HackGen
 ARG HACKGEN_VER=v2.8.0
-ARG HACKGEN_FILE=HackGen_${HACKGEN_VER}
+ARG HACKGEN_FILE=HackGen_NF_${HACKGEN_VER}
 RUN curl -sLJO https://github.com/yuru7/HackGen/releases/download/${HACKGEN_VER}/${HACKGEN_FILE}.zip && \
     unzip ${HACKGEN_FILE}.zip && rm ${HACKGEN_FILE}.zip && \
     mkdir "$HOME/.fonts/" && mv ${HACKGEN_FILE}/* "$HOME/.fonts/" && rm -rf ${HACKGEN_FILE} && \
