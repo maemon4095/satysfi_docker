@@ -11,5 +11,10 @@ Docker内でsatysfiを使うためのイメージ．
 # インストール
 `docker pull ghcr.io/maemon4095/satysfi:latest`
 
+# TODO
+- fonts類を抜いたslimを作る．
+- よく使うパッケージをインストールした版を作る．
+- よく使うフォントをインストールした版を作る．
+
 # 参考
 https://github.com/amutake/docker-satysfi
