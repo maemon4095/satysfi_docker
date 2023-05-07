@@ -27,5 +27,5 @@ ARG HACKGEN_VER=v2.8.0
 ARG HACKGEN_FILE=HackGen_${HACKGEN_VER}
 RUN curl -sLJO https://github.com/yuru7/HackGen/releases/download/${HACKGEN_VER}/${HACKGEN_FILE}.zip && \
     unzip ${HACKGEN_FILE}.zip && rm ${HACKGEN_FILE}.zip && \
-    mkdir "$HOME/.fonts/" && mv ${HACKGEN_FILE}/* "$HOME/.fonts/" && rm ${HACKGEN_FILE} && \
+    mkdir "$HOME/.fonts/" && mv ${HACKGEN_FILE}/* "$HOME/.fonts/" && rm -rf ${HACKGEN_FILE} && \
     fc-cache -f -v
