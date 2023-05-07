@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - 'main'
+    paths:
+      - '**/Dockerfile'
+      - '!.github/**'
 jobs:
   build:
     runs-on: ubuntu-latest
