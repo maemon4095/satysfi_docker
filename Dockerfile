@@ -9,8 +9,6 @@ ENV OPAMYES=true
 RUN opam init --no-setup --disable-sandboxing
 RUN eval $(opam env)
 RUN echo "eval \$(opam env)" >> $HOME/.bashrc
-## to execute satysfi via docker run 
-ENV PATH="$HOME/.opam/default/bin:$PATH"
 RUN opam repository add --all-switches satysfi-external https://github.com/gfngfn/satysfi-external-repo.git
 RUN opam repository add --all-switches satyrographos-repo https://github.com/na4zagin3/satyrographos-repo.git
 
@@ -30,3 +28,6 @@ RUN curl -sLJO https://github.com/yuru7/HackGen/releases/download/${HACKGEN_VER}
     unzip ${HACKGEN_FILE}.zip && rm ${HACKGEN_FILE}.zip && \
     mkdir "$HOME/.fonts/" && mv ${HACKGEN_FILE}/* "$HOME/.fonts/" && rm -rf ${HACKGEN_FILE} && \
     fc-cache -f -v
+
+COPY entry.sh /entry
+ENTRYPOINT [ "/entry/entry.sh" ]
