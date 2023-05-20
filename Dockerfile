@@ -9,7 +9,6 @@ ENV OPAMYES=true
 RUN opam init --no-setup --disable-sandboxing
 RUN eval $(opam env)
 RUN echo "eval \$(opam env)" >> /root/.profile
-ENV PATH="/root/.opam/default/bin:$PATH"
 RUN opam repository add --all-switches satysfi-external https://github.com/gfngfn/satysfi-external-repo.git
 RUN opam repository add --all-switches satyrographos-repo https://github.com/na4zagin3/satyrographos-repo.git
 
@@ -20,7 +19,6 @@ RUN opam install satysfi satysfi-dist satyrographos
 RUN curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh -s -- -y
 ## install satysfi language server
 RUN /root/.cargo/bin/cargo install --git https://github.com/monaqa/satysfi-language-server
-ENV PATH="/root/.cargo/bin:$PATH"
 
 # install fonts
 ## install HackGen
@@ -30,3 +28,6 @@ RUN curl -sLJO https://github.com/yuru7/HackGen/releases/download/${HACKGEN_VER}
     unzip ${HACKGEN_FILE}.zip && rm ${HACKGEN_FILE}.zip && \
     mkdir "$HOME/.fonts/" && mv ${HACKGEN_FILE}/* "$HOME/.fonts/" && rm -rf ${HACKGEN_FILE} && \
     fc-cache -f -v
+
+COPY entry.sh /
+ENTRYPOINT [ "/entry.sh" ]
