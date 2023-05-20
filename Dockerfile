@@ -29,5 +29,6 @@ RUN curl -sLJO https://github.com/yuru7/HackGen/releases/download/${HACKGEN_VER}
     mkdir "$HOME/.fonts/" && mv ${HACKGEN_FILE}/* "$HOME/.fonts/" && rm -rf ${HACKGEN_FILE} && \
     fc-cache -f -v
 
-COPY entry.sh /entry
+
+COPY entry.sh /entry/
 ENTRYPOINT [ "/entry/entry.sh" ]
