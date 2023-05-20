@@ -30,4 +30,5 @@ RUN curl -sLJO https://github.com/yuru7/HackGen/releases/download/${HACKGEN_VER}
     fc-cache -f -v
 
 COPY entry.sh /
+RUN chmod a+x /entry.sh
 ENTRYPOINT [ "/entry.sh" ]
