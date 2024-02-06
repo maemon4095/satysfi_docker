@@ -16,6 +16,9 @@ on:
     paths:
       - 'images/**/Dockerfile*'
 
+env:
+  DELIM: ━─━─━─━─━─━
+
 jobs:
   entry:
     runs-on: ubuntu-latest
@@ -40,7 +43,9 @@ jobs:
           echo "=====files====="
           echo "${FILES}"
           echo "==============="
-          echo "TARGETS='${FILES}'" >> "$GITHUB_ENV"
+          echo "TARGETS<<${{ env.DELIM }}" >> "$GITHUB_ENV"
+          echo "${FILES}" >> "$GITHUB_ENV"
+          echo "${{ env.DELIM }}" >> "$GITHUB_ENV"
 
   diff:
     runs-on: ubuntu-latest
@@ -57,7 +62,9 @@ jobs:
           echo "=====diffs====="
           echo "${DIFF}"
           echo "==============="
-          echo "TARGETS='${DIFF}'" >> "$GITHUB_ENV"
+          echo "TARGETS<<${{ env.DELIM }}" >> "$GITHUB_ENV"
+          echo "${DIFF}" >> "$GITHUB_ENV"
+          echo "${{ env.DELIM }}" >> "$GITHUB_ENV"
 
   join:
     runs-on: ubuntu-latest
