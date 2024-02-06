@@ -65,7 +65,7 @@ jobs:
       - name: Collect changed Dockerfiles
         id: collect
         run: |
-          git fetch origin ${{ github.ref_name }} --depth=1
+          git fetch origin ${{ github.ref_name }} --depth=2
           DIFF=$(git diff --name-only origin/${{ github.ref_name }} HEAD^ | grep --color=never Dockerfile || echo "")
           echo "=====diffs====="
           echo "${DIFF}"
