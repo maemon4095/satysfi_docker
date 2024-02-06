@@ -1,6 +1,15 @@
 name: build
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: running mode
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - diff
   push:
     branches:
       - 'main'
@@ -8,16 +17,37 @@ on:
       - 'images/**/Dockerfile*'
 
 jobs:
-  control:
+  entry:
     runs-on: ubuntu-latest
     outputs:
-      targets: ${{ steps.collect.outputs.targets }}
+      mode: ${{ steps.coalesce.outputs.MODE }}
+    steps:
+      - id: coalesce
+        run: |
+          MODE="${{ inputs.mode || 'diff' }}"
+          echo "MODE=${MODE}" >> "$GITHUB_OUTPUT"
+
+  all:
+    needs: entry
+    if: ${{ needs.entry.outputs.mode == 'all' }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+      - name: Collect all Dockerfiles
+        run: |
+          FILES=$(find ./images -wholename **/Dockerfile*)
+          echo "TARGETS=${FILES}" >> "$GITHUB_ENV"
+
+  diff:
+    needs: entry
+    if: ${{ needs.entry.outputs.mode == 'diff' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       
       - name: Collect changed Dockerfiles
-        id: collect
         run: |
           git fetch origin ${{ github.ref_name }} --depth=1
           DIFF=$(git diff --name-only origin/${{ github.ref_name }} HEAD | grep --color=never Dockerfile || echo "")
@@ -25,15 +55,15 @@ jobs:
           echo "${DIFF}"
           echo "==============="
           TARGETS=$(echo "${DIFF}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print $0 } NR >1 { print "," $0 } END { print "]" }')
-          echo "targets=${TARGETS}" >> "$GITHUB_OUTPUT"
+          echo "TARGETS=${TARGETS}" >> "$GITHUB_ENV"
 
   build:
-    needs: control
+    needs: [diff, entry]
     runs-on: ubuntu-latest
-    if: ${{ needs.control.outputs.targets != '[]' }}
+    if: ${{ github.env.TARGETS != '[]' }}
     strategy:
       matrix: 
-        target: ${{ fromJson(needs.control.outputs.targets) }}
+        target: ${{ fromJson(github.env.TARGETS) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
