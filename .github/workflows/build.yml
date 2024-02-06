@@ -1,11 +1,11 @@
 name: build
 on:
+  workflow_dispatch:
   push:
     branches:
       - 'main'
     paths:
       - 'images/**/Dockerfile*'
-      - '.github/workflows/*'
 
 jobs:
   control:
@@ -19,8 +19,8 @@ jobs:
       - name: Collect changed Dockerfiles
         id: collect
         run: |
-          git fetch origin ${{ github.ref }} --depth=1
-          DIFF=$(git diff --name-only origin/${{ github.ref }} HEAD | grep --color=never Dockerfile)
+          git fetch origin ${{ github.ref_name }} --depth=1
+          DIFF=$(git diff --name-only origin/${{ github.ref_name }} HEAD | grep --color=never Dockerfile)
           echo "=====diffs====="
           echo "${DIFF}"
           echo "==============="
