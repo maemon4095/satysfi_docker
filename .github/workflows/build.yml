@@ -85,9 +85,10 @@ jobs:
     outputs:
       targets: ${{ steps.join.outputs.targets }}
     steps:
-      - id: join
+      - name: join and format targets
+        id: join
         run: |
-          TARGETS=$(echo "$TARGETS" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print "\"$0\"" } NR>1 { print "," "\"$0\"" } END { print "]" }')
+          TARGETS=$(echo "${{ env.TARGETS }}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print "\"$0\"" } NR>1 { print "," "\"$0\"" } END { print "]" }')
           echo "targets=${TARGETS}" >> "$GITHUB_OUTPUT"
 
   build:
