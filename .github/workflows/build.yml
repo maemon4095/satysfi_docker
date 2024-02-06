@@ -62,8 +62,7 @@ jobs:
   join:
     runs-on: ubuntu-latest
     needs: [diff, entry]
-    # HACK: add `always()` to prevent skipping the job depends on skipped one
-    if: ${{ always() }} 
+    if: ${{ !cancelled() && !failure() }} 
     outputs:
       targets: ${{ steps.join.outputs.TARGETS }}
     steps:
