@@ -121,15 +121,15 @@ jobs:
       - name: Generate tag
         run: |
           DIR=$(dirname "${{ matrix.target }}")
-          FILENAME=(basename "${{ matrix.target }}")
+          FILENAME=$(basename "${{ matrix.target }}")
+          EXT=$(echo $FILENAME | sed 's/^[^\.]*\.\{0,1\}//')
           IMAGE_NAME="satysfi-$(realpath --relative-to="images" "$DIR" | sed "s|/|-|")"
-          TAG=$((echo "$FILENAME" | grep --color=never -o -e "\..*$") || echo "latest")
-          FULLNAME="ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:$TAG"
+          TAG="ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:${EXT:=latest}"
           
-          echo "build ${{ matrix.target }} as ${FULLNAME}"
+          echo "build ${{ matrix.target }} as ${TAG}"
 
           echo "BUILD_CTX=${DIR}" >> "$GITHUB_ENV"
-          echo "DIST_TAG=${FULLNAME}" >> "$GITHUB_ENV"
+          echo "DIST_TAG=${TAG}" >> "$GITHUB_ENV"
 
       - name: Build and push
         uses: docker/build-push-action@v5
