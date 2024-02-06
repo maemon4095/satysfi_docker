@@ -28,9 +28,9 @@ jobs:
           echo "MODE=${MODE}" >> "$GITHUB_OUTPUT"
 
   all:
+    runs-on: ubuntu-latest
     needs: entry
     if: ${{ needs.entry.outputs.mode == 'all' }}
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,14 +40,12 @@ jobs:
           echo "=====files====="
           echo "${FILES}"
           echo "==============="
-          TARGETS=$(echo "${FILES}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print "\"$0\"" } NR >1 { print "," "\"$0\"" } END { print "]" }')
-          echo "$TARGETS"
-          echo "TARGETS=${TARGETS}" >> "$GITHUB_ENV"
+          echo "TARGETS='${FILES}'" >> "$GITHUB_ENV"
 
   diff:
+    runs-on: ubuntu-latest
     needs: entry
     if: ${{ needs.entry.outputs.mode == 'diff' }}
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -59,18 +57,28 @@ jobs:
           echo "=====diffs====="
           echo "${DIFF}"
           echo "==============="
-          TARGETS=$(echo "${DIFF}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print "\"$0\"" } NR >1 { print "," "\"$0\"" } END { print "]" }')
-          echo "$TARGETS"
-          echo "TARGETS=${TARGETS}" >> "$GITHUB_ENV"
+          echo "TARGETS='${DIFF}'" >> "$GITHUB_ENV"
+
+  join:
+    runs-on: ubuntu-latest
+    needs: [diff, entry]
+    # HACK: add `always()` to prevent skipping the job depends on skipped one
+    if: ${{ always() }} 
+    outputs:
+      targets: ${{ steps.join.outputs.TARGETS }}
+    steps:
+      - id: join
+        run: |
+          TARGETS=$(echo "${{ env.TARGETS }}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print "\"$0\"" } NR >1 { print "," "\"$0\"" } END { print "]" }')
+          echo "TARGETS=${TARGETS}" >> "$GITHUB_OUTPUT"
 
   build:
-    needs: [diff, entry]
     runs-on: ubuntu-latest
-    # HACK: add `always()` to prevent skipping the job depends on skipped one
-    if: ${{ always() && (github.env.TARGETS != '[]') }} 
+    needs: [join]
+    if: ${{ needs.join.outputs.targets != '[]' }} 
     strategy:
       matrix: 
-        target: ${{ fromJson(github.env.TARGETS) }}
+        target: ${{ fromJson(needs.join.outputs.targets) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
