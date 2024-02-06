@@ -5,7 +5,7 @@ on:
       - 'main'
     paths:
       - 'images/**/Dockerfile*'
-      - '!.github/**'
+      - '.github/workflows/*'
 
 jobs:
   control:
