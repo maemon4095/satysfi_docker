@@ -126,6 +126,8 @@ jobs:
           TAG=$((echo "$FILENAME" | grep --color=never -o -e "\..*$") || echo "latest")
           FULLNAME="ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:$TAG"
           
+          echo "build ${{ matrix.target }} as ${FULLNAME}"
+
           echo "BUILD_CTX=${DIR}" >> "$GITHUB_ENV"
           echo "DIST_TAG=${FULLNAME}" >> "$GITHUB_ENV"
 
