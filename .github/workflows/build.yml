@@ -40,7 +40,7 @@ jobs:
           echo "=====files====="
           echo "${FILES}"
           echo "==============="
-          TARGETS=$(echo "${FILES}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print \" $0 \" } NR >1 { print "," \" $0 \" } END { print "]" }')
+          TARGETS=$(echo "${FILES}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print "\"$0\"" } NR >1 { print "," "\"$0\"" } END { print "]" }')
           echo "$TARGETS"
           echo "TARGETS=${TARGETS}" >> "$GITHUB_ENV"
 
@@ -59,7 +59,7 @@ jobs:
           echo "=====diffs====="
           echo "${DIFF}"
           echo "==============="
-          TARGETS=$(echo "${DIFF}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print \" $0 \" } NR >1 { print "," \" $0 \" } END { print "]" }')
+          TARGETS=$(echo "${DIFF}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print "\"$0\"" } NR >1 { print "," "\"$0\"" } END { print "]" }')
           echo "$TARGETS"
           echo "TARGETS=${TARGETS}" >> "$GITHUB_ENV"
 
