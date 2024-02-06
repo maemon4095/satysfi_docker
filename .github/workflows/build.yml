@@ -4,11 +4,34 @@ on:
     branches:
       - 'main'
     paths:
-      - '**/Dockerfile'
+      - 'images/**/Dockerfile*'
       - '!.github/**'
+
 jobs:
-  build:
+  control:
     runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.collect.outputs.targets }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Collect changed Dockerfiles
+        id: collect
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          DIFF=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep --color=never Dockerfile)
+          echo "=====diffs====="
+          echo "${DIFF}"
+          echo "==============="
+          echo "targets=${DIFF}" >> "GITHUB_OUTPUT"
+
+  build:
+    needs: control
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: 
+        target: ${{ needs.control.outputs.targets }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -27,7 +50,14 @@ jobs:
           password: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
       
       - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          push: true
-          tags: ghcr.io/${{ github.repository_owner }}/satysfi:latest
+        run: |
+          DIR=$(dirname "${{ matrix.target }}")
+          FILENAME=(basename "${{ matrix.target }}")
+          IMAGE_NAME="satysfi-$(realpath --relative-to="images" | sed "s|/|-|")"
+          TAG=$((echo "$FILENAME" | grep --color=never -o -e "\..*$") || echo "latest")
+          FULLNAME="ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:$TAG"
+          
+          echo "build ${{ matrix.target }} as $IMAGE_NAME:$TAG"
+
+          docker build -f "${{ matrix.target }}" -t "$FULLNAME" "$DIR"
+          docker push "$FULLNAME"
