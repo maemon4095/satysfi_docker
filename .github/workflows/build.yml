@@ -24,8 +24,8 @@ jobs:
           echo "=====diffs====="
           echo "${DIFF}"
           echo "==============="
-          TARGETS="$(echo "${DIFF}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print $0 } NR >1 { print "," $0 } END { print "]" }')"
-          echo "targets=${TARGETS}" >> "GITHUB_OUTPUT"
+          TARGETS=$(echo "${DIFF}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print $0 } NR >1 { print "," $0 } END { print "]" }')
+          echo "targets=${TARGETS}" >> "$GITHUB_OUTPUT"
 
   build:
     needs: control
