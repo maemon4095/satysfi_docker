@@ -68,7 +68,6 @@ jobs:
       - name: Collect changed Dockerfiles
         id: collect
         run: |
-          echo "$(ls -aR1)"
           DIFF=$(git diff --name-only HEAD^ | grep --color=never Dockerfile || echo "")
           echo "=====diffs====="
           echo "${DIFF}"
