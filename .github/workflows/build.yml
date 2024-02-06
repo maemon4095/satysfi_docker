@@ -18,7 +18,6 @@ on:
 
 env:
   DELIM: ━─━─━─━─━─━
-  TARGETS:
 
 jobs:
   entry:
