@@ -1,0 +1,11 @@
+FROM ghcr.io/maemon4095/satysfi-base:ubuntu
+RUN eval $(opam env)
+RUN echo "eval \$(opam env)" >> /root/.profile
+
+## install satysfi
+RUN opam install camlimages.5.0.4-1 satysfi satysfi-dist satyrographos
+
+# rust setup
+RUN curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh -s -- -y
+## install satysfi language server
+RUN /root/.cargo/bin/cargo install --git https://github.com/monaqa/satysfi-language-server
