@@ -34,30 +34,36 @@ jobs:
     runs-on: ubuntu-latest
     needs: entry
     if: ${{ needs.entry.outputs.mode == 'all' }}
+    outputs:
+      targets: ${{ steps.collect.outputs.TARGETS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Collect all Dockerfiles
+        id: collect
         run: |
           FILES=$(find ./images -wholename **/Dockerfile*)
           echo "=====files====="
           echo "${FILES}"
           echo "==============="
           {
-            echo "TARGETS<<${{ env.DELIM }}"
+            echo "targets<<${{ env.DELIM }}"
             echo "${FILES}"
             echo "${{ env.DELIM }}"
-          } >> "$GITHUB_ENV"
+          } >> "$GITHUB_OUTPUT"
 
   diff:
     runs-on: ubuntu-latest
     needs: entry
     if: ${{ needs.entry.outputs.mode == 'diff' }}
+    outputs:
+      targets: ${{ steps.collect.outputs.TARGETS }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       
       - name: Collect changed Dockerfiles
+        id: collect
         run: |
           git fetch origin ${{ github.ref_name }} --depth=1
           DIFF=$(git diff --name-only origin/${{ github.ref_name }} HEAD | grep --color=never Dockerfile || echo "")
@@ -65,22 +71,24 @@ jobs:
           echo "${DIFF}"
           echo "==============="
           {
-            echo "TARGETS<<${{ env.DELIM }}"
-            echo "${DIFF}" >> "$GITHUB_ENV"
+            echo "targets<<${{ env.DELIM }}"
+            echo "${DIFF}"
             echo "${{ env.DELIM }}"
-          } >> "$GITHUB_ENV"
+          } >> "$GITHUB_OUTPUT"
 
   join:
     runs-on: ubuntu-latest
     needs: [diff, all]
     if: ${{ !cancelled() && !failure() }} 
+    env:
+      TARGETS: ${{ needs.all.outputs.targets || needs.diff.outputs.targets }}
     outputs:
-      targets: ${{ steps.join.outputs.TARGETS }}
+      targets: ${{ steps.join.outputs.targets }}
     steps:
       - id: join
         run: |
           TARGETS=$(echo "$TARGETS" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print "\"$0\"" } NR>1 { print "," "\"$0\"" } END { print "]" }')
-          echo "TARGETS=${TARGETS}" >> "$GITHUB_OUTPUT"
+          echo "targets=${TARGETS}" >> "$GITHUB_OUTPUT"
 
   build:
     runs-on: ubuntu-latest
