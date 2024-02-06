@@ -1,90 +1,29 @@
 name: build
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      mode:
-        description: running mode
+      targets:
+        type: string
         required: true
-        default: "all"
-        type: choice
-        options:
-          - all
-          - diff
-  push:
-    branches:
-      - 'main'
-    paths:
-      - 'images/**/Dockerfile*'
-
-env:
-  DELIM: ━─━─━─━─━─━
 
 jobs:
-  entry:
+  format:
     runs-on: ubuntu-latest
-    outputs:
-      mode: ${{ steps.coalesce.outputs.MODE }}
-    steps:
-      - id: coalesce
-        run: |
-          MODE="${{ inputs.mode || 'diff' }}"
-          echo "MODE=${MODE}" >> "$GITHUB_OUTPUT"
-
-  all:
-    runs-on: ubuntu-latest
-    needs: entry
-    if: ${{ needs.entry.outputs.mode == 'all' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Collect all Dockerfiles
-        run: |
-          FILES=$(find ./images -wholename **/Dockerfile*)
-          echo "=====files====="
-          echo "${FILES}"
-          echo "==============="
-          echo "TARGETS<<${{ env.DELIM }}" >> "$GITHUB_ENV"
-          echo "${FILES}" >> "$GITHUB_ENV"
-          echo "${{ env.DELIM }}" >> "$GITHUB_ENV"
-
-  diff:
-    runs-on: ubuntu-latest
-    needs: entry
-    if: ${{ needs.entry.outputs.mode == 'diff' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Collect changed Dockerfiles
-        run: |
-          git fetch origin ${{ github.ref_name }} --depth=1
-          DIFF=$(git diff --name-only origin/${{ github.ref_name }} HEAD | grep --color=never Dockerfile || echo "")
-          echo "=====diffs====="
-          echo "${DIFF}"
-          echo "==============="
-          echo "TARGETS<<${{ env.DELIM }}" >> "$GITHUB_ENV"
-          echo "${DIFF}" >> "$GITHUB_ENV"
-          echo "${{ env.DELIM }}" >> "$GITHUB_ENV"
-
-  join:
-    runs-on: ubuntu-latest
-    needs: [diff, entry]
-    if: ${{ !cancelled() && !failure() }} 
     outputs:
       targets: ${{ steps.join.outputs.TARGETS }}
     steps:
       - id: join
         run: |
-          TARGETS=$(echo "${{ env.TARGETS }}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print "\"$0\"" } NR >1 { print "," "\"$0\"" } END { print "]" }')
+          TARGETS=$(echo "${{ inputs.targets }}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print "\"$0\"" } NR>1 { print "," "\"$0\"" } END { print "]" }')
           echo "TARGETS=${TARGETS}" >> "$GITHUB_OUTPUT"
 
   build:
     runs-on: ubuntu-latest
-    needs: [join]
-    if: ${{ needs.join.outputs.targets != '[]' }} 
+    needs: format
+    if: ${{ needs.format.outputs.targets != '[]' }} 
     strategy:
       matrix: 
-        target: ${{ fromJson(needs.join.outputs.targets) }}
+        target: ${{ fromJson(needs.format.outputs.targets) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
