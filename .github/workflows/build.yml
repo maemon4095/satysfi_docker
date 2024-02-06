@@ -37,6 +37,9 @@ jobs:
       - name: Collect all Dockerfiles
         run: |
           FILES=$(find ./images -wholename **/Dockerfile*)
+          echo "=====files====="
+          echo "${FILES}"
+          echo "==============="
           TARGETS=$(echo "${FILES}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print $0 } NR >1 { print "," $0 } END { print "]" }')
           echo "TARGETS=${TARGETS}" >> "$GITHUB_ENV"
 
