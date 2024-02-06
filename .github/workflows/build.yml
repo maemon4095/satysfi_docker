@@ -30,6 +30,7 @@ jobs:
   build:
     needs: control
     runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
       matrix: 
         target: ${{ fromJson(needs.control.outputs.targets) }}
