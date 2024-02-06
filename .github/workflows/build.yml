@@ -20,7 +20,7 @@ jobs:
         id: collect
         run: |
           git fetch origin ${{ github.ref_name }} --depth=1
-          DIFF=$(git diff --name-only origin/${{ github.ref_name }} HEAD | grep --color=never Dockerfile || "")
+          DIFF=$(git diff --name-only origin/${{ github.ref_name }} HEAD | grep --color=never Dockerfile || echo "")
           echo "=====diffs====="
           echo "${DIFF}"
           echo "==============="
