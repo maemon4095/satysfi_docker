@@ -89,11 +89,16 @@ jobs:
         id: join
         run: |
           TARGETS=$(echo "${{ env.TARGETS }}" | awk -v ORS="" 'BEGIN { print "[" } NR==1 { print "\"$0\"" } NR>1 { print "," "\"$0\"" } END { print "]" }')
+
+          echo "=====targets====="
+          echo "${TARGETS}"
+          echo "================="
+          
           echo "targets=${TARGETS}" >> "$GITHUB_OUTPUT"
 
   build:
     runs-on: ubuntu-latest
-    needs: [join]
+    needs: join
     if: ${{ needs.join.outputs.targets != '[]' }} 
     strategy:
       matrix: 
