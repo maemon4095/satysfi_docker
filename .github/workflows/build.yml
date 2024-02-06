@@ -92,12 +92,12 @@ jobs:
 
           echo "${TARGETS}"
           
-          echo "targets=${TARGETS}" >> "$GITHUB_OUTPUT"
+          echo "targets={\"include\":${TARGETS}}" >> "$GITHUB_OUTPUT"
 
   build:
     runs-on: ubuntu-latest
     needs: join
-    if: ${{  !cancelled() && !failure() && needs.join.outputs.targets != '[]' }} 
+    if: ${{ !cancelled() && !failure() && needs.join.outputs.targets != '[]' }} 
     strategy:
       matrix: ${{ fromJson(needs.join.outputs.targets) }}
     steps:
