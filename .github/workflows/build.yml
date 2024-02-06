@@ -64,7 +64,8 @@ jobs:
   build:
     needs: [diff, entry]
     runs-on: ubuntu-latest
-    if: ${{ github.env.TARGETS != '[]' }}
+    # HACK: add `always()` to prevent skipping the job depends on skipped one
+    if: ${{ always() && (github.env.TARGETS != '[]') }} 
     strategy:
       matrix: 
         target: ${{ fromJson(github.env.TARGETS) }}
