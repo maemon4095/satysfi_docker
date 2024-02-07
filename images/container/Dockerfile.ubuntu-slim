@@ -1,7 +1,7 @@
 FROM ubuntu:22.04 AS build-rs
 
 # rust setup
-RUN apt install -y git unzip curl build-essential
+RUN apt update -y && apt install -y git unzip curl build-essential
 RUN curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh -s -- -y
 ## build satysfi language server
 RUN git clone https://github.com/monaqa/satysfi-language-server.git && cd satysfi-language-server && \
