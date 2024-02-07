@@ -1,6 +1,8 @@
 FROM alpine:3.19 AS build-rs
 
 # rust setup
+RUN apk update && \
+    apk add curl unzip patch build-base git
 RUN curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh -s -- -y
 ## build satysfi language server
 RUN git clone https://github.com/monaqa/satysfi-language-server.git && cd satysfi-language-server && \
