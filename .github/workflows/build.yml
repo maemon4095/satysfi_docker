@@ -65,7 +65,9 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Collect changed Dockerfiles
+      - # FIXME: 差分を集めているため，存在しなくなったファイルも含まれてしまう．
+        # FIXME: 一度ビルドに失敗すると差分に含まれなくなる．
+        name: Collect changed Dockerfiles
         id: collect
         run: |
           DIFF=$(git diff --name-only HEAD^ | grep --color=never Dockerfile || echo "")
