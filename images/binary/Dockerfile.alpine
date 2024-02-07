@@ -29,6 +29,8 @@ RUN mkdir /workspace
 
 COPY ./entrypoint.sh /entrypoint.sh
 
+RUN chmod a+x /entrypoint.sh
+
 WORKDIR /workspace
 
 ENTRYPOINT ["/entrypoint.sh"]
