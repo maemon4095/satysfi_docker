@@ -44,7 +44,7 @@ jobs:
         uses: denoland/setup-deno@v1
 
       - name: Build and push
-        run: deno run -A build.ts --base=${{ matrix.distro }} --cache-from="type=local,src=/tmp/.buildx-cache" --cache-to="type=local,dest=/tmp/.buildx-cache-new,mode=max"
+        run: deno run -A build.ts --base=${{ matrix.distro }} "--cache-from=type=local,src=/tmp/.buildx-cache" "--cache-to=type=local,dest=/tmp/.buildx-cache-new,mode=max"
 
       - # Temp fix
         # https://github.com/docker/build-push-action/issues/252

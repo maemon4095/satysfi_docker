@@ -28,6 +28,8 @@ const [schemaId, args] = parse(
     Deno.args
 );
 
+console.log("args:", args);
+
 const BASE_NAME = "satysfi-base";
 const BINARY_NAME = "satysfi-binary";
 const CONTAINER_NAME = "satysfi-container";
@@ -41,7 +43,7 @@ const CACHE_ARGS = (() => {
     const from = args.options["--cache-from"];
     const to = args.options["--cache-to"];
 
-    return `--cache-from=${from} --cache-to=${to}`;
+    return `"--cache-from=${from}" "--cache-to=${to}"`;
 })();
 
 function baseTag(baseImage: string, baseVersion: string) {
