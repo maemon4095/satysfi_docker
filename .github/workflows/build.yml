@@ -12,6 +12,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distro: ["ubuntu", "alpine"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,9 +23,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
-          key: satysfi-buildx-${{ hashFiles('**/*.Dockerfile') }}
+          key: satysfi-${{ matrix.distro }}-buildx-${{ hashFiles('**/*.Dockerfile') }}
           restore-keys: |
-            satysfi-buildx-
+            satysfi-${{ matrix.distro }}-buildx-
         
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -41,7 +44,7 @@ jobs:
         uses: denoland/setup-deno@v1
 
       - name: Build and push
-        run: deno run -A build.ts
+        run: deno run -A build.ts --base=${{ matrix.distro }}
 
       - # Temp fix
         # https://github.com/docker/build-push-action/issues/252

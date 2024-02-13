@@ -1,113 +1,100 @@
 import $ from "https://deno.land/x/dax@0.39.1/mod.ts";
-import { Dependencies } from "https://raw.githubusercontent.com/maemon4095/deno_make/main/core.ts";
 import { utils } from "https://raw.githubusercontent.com/maemon4095/deno_make/main/mod.ts";
+import { parse, patterns } from "https://raw.githubusercontent.com/maemon4095/ts_components/466b504fa02c7e0b03026a33f56437ea22a02f8b/parse/mod.ts";
 
-const ALPINE_VERSION = "3.19";
-const UBUNTU_VERSION = "22.04";
+const [schemaId, args] = parse(
+    [
+        {
+            positional: [patterns.optional(patterns.str)],
+            options: {
+                ["--base"]: patterns.choice("alpine", "ubuntu"),
+                ["--version"]: patterns.optional(patterns.str)
+            }
+        },
+        {
+            positional: [patterns.optional(patterns.str)],
+            options: {}
+        }
+    ] as const,
+    Deno.args
+);
 
 const BASE_NAME = "satysfi-base";
 const BINARY_NAME = "satysfi-binary";
 const CONTAINER_NAME = "satysfi-container";
 
-const ALPINE_BASE_TAG = `alpine-${ALPINE_VERSION}`;
-const UBUNTU_BASE_TAG = `ubuntu-${UBUNTU_VERSION}`;
-
 const REGISTRY = "ghcr.io/maemon4095";
 
-async function buildBase() {
+function baseTag(baseImage: string, baseVersion: string) {
+    return `${BASE_NAME}:${baseImage}-${baseVersion}`;
+}
+
+function buildBase(baseImage: string, baseVersion: string) {
     const context = "./images/base";
-
-    await Promise.all([
-        $.raw`docker build --build-arg="BASE_VERSION=${ALPINE_VERSION}" -f ${context}/alpine.Dockerfile -t local/${BASE_NAME}:${ALPINE_BASE_TAG} ${context}`,
-        $.raw`docker build --build-arg="BASE_VERSION=${UBUNTU_VERSION}" -f ${context}/ubuntu.Dockerfile -t local/${BASE_NAME}:${UBUNTU_BASE_TAG} ${context}`
-    ]);
+    const TAG = baseTag(baseImage, baseVersion);
+    return async () => {
+        await $.raw`docker build --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
+    };
 }
 
-async function pushBase() {
-    await Promise.all([
-        $.raw`docker tag local/${BASE_NAME}:${ALPINE_BASE_TAG} ${REGISTRY}/${BASE_NAME}:${ALPINE_BASE_TAG}`,
-        $.raw`docker tag local/${BASE_NAME}:${UBUNTU_BASE_TAG} ${REGISTRY}/${BASE_NAME}:${UBUNTU_BASE_TAG}`
-    ]);
-
-    await Promise.all([
-        $.raw`docker push ${REGISTRY}/${BASE_NAME}:${ALPINE_BASE_TAG}`,
-        $.raw`docker push ${REGISTRY}/${BASE_NAME}:${UBUNTU_BASE_TAG}`
-    ]);
+function binaryTag(baseImage: string, baseVersion: string) {
+    return `${BINARY_NAME}:${baseImage}-${baseVersion}`;
 }
 
-async function buildBinary() {
+function buildBinary(baseImage: string, baseVersion: string) {
     const context = "./images/binary";
-
-    await Promise.all([
-        $.raw`docker build --build-arg="BASE_VERSION=${ALPINE_VERSION}" -f ${context}/alpine.Dockerfile -t local/${BINARY_NAME}:${ALPINE_BASE_TAG} ${context}`,
-        $.raw`docker build --build-arg="BASE_VERSION=${UBUNTU_VERSION}" -f ${context}/ubuntu.Dockerfile -t local/${BINARY_NAME}:${UBUNTU_BASE_TAG} ${context}`
-    ]);
+    const TAG = binaryTag(baseImage, baseVersion);
+    return async () => {
+        await $.raw`docker build --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
+    };
 }
 
-async function pushBinary() {
-    await Promise.all([
-        $.raw`docker tag local/${BINARY_NAME}:${ALPINE_BASE_TAG} ${REGISTRY}/${BINARY_NAME}:${ALPINE_BASE_TAG}`,
-        $.raw`docker tag local/${BINARY_NAME}:${UBUNTU_BASE_TAG} ${REGISTRY}/${BINARY_NAME}:${UBUNTU_BASE_TAG}`
-    ]);
-
-    await Promise.all([
-        $.raw`docker push ${REGISTRY}/${BINARY_NAME}:${ALPINE_BASE_TAG}`,
-        $.raw`docker push ${REGISTRY}/${BINARY_NAME}:${UBUNTU_BASE_TAG}`
-    ]);
+function containerTag(baseImage: string, baseVersion: string) {
+    return `${CONTAINER_NAME}:${baseImage}-${baseVersion}`;
 }
 
-async function buildContainer() {
+function buildContainer(baseImage: string, baseVersion: string) {
     const context = "./images/container";
+    const TAG = containerTag(baseImage, baseVersion);
 
-    await Promise.all([
-        $.raw`docker build --build-arg="BASE_VERSION=${ALPINE_VERSION}" -f ${context}/alpine.Dockerfile -t local/${CONTAINER_NAME}:${ALPINE_BASE_TAG} ${context}`,
-        $.raw`docker build --build-arg="BASE_VERSION=${UBUNTU_VERSION}" -f ${context}/ubuntu.Dockerfile -t local/${CONTAINER_NAME}:${UBUNTU_BASE_TAG} ${context}`
-    ]);
+    return async () => {
+        await $.raw`docker build --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
+    };
 }
 
-async function pushContainer() {
-    await Promise.all([
-        $.raw`docker tag local/${CONTAINER_NAME}:${ALPINE_BASE_TAG} ${REGISTRY}/${CONTAINER_NAME}:${ALPINE_BASE_TAG}`,
-        $.raw`docker tag local/${CONTAINER_NAME}:${UBUNTU_BASE_TAG} ${REGISTRY}/${CONTAINER_NAME}:${UBUNTU_BASE_TAG}`
-    ]);
-
-    await Promise.all([
-        $.raw`docker push ${REGISTRY}/${CONTAINER_NAME}:${ALPINE_BASE_TAG}`,
-        $.raw`docker push ${REGISTRY}/${CONTAINER_NAME}:${UBUNTU_BASE_TAG}`
-    ]);
+function containerSlimTag(baseImage: string, baseVersion: string) {
+    return `${CONTAINER_NAME}:${baseImage}-${baseVersion}-slim`;
 }
 
-async function buildContainerSlim() {
+function buildContainerSlim(baseImage: string, baseVersion: string) {
     const context = "./images/container";
-
-    await Promise.all([
-        $.raw`docker build --build-arg="BASE_VERSION=${ALPINE_VERSION}" -f ${context}/alpine-slim.Dockerfile -t local/${CONTAINER_NAME}:${ALPINE_BASE_TAG}-slim ${context}`,
-        $.raw`docker build --build-arg="BASE_VERSION=${UBUNTU_VERSION}" -f ${context}/ubuntu-slim.Dockerfile -t local/${CONTAINER_NAME}:${UBUNTU_BASE_TAG}-slim ${context}`
-    ]);
+    const TAG = containerSlimTag(baseImage, baseVersion);
+    return async () => {
+        await $.raw`docker build --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}-slim.Dockerfile -t local/${TAG} ${context}`;
+    };
 }
 
-async function pushContainerSlim() {
-    await Promise.all([
-        $.raw`docker tag local/${CONTAINER_NAME}:${ALPINE_BASE_TAG}-slim ${REGISTRY}/${CONTAINER_NAME}:${ALPINE_BASE_TAG}-slim`,
-        $.raw`docker tag local/${CONTAINER_NAME}:${UBUNTU_BASE_TAG}-slim ${REGISTRY}/${CONTAINER_NAME}:${UBUNTU_BASE_TAG}-slim`
-    ]);
-
-    await Promise.all([
-        $.raw`docker push ${REGISTRY}/${CONTAINER_NAME}:${ALPINE_BASE_TAG}-slim`,
-        $.raw`docker push ${REGISTRY}/${CONTAINER_NAME}:${UBUNTU_BASE_TAG}-slim`
-    ]);
+function push(tag: string) {
+    return async () => {
+        await $.raw`docker tag local/${tag} ${REGISTRY}/${tag}`;
+        await $.raw`docker push ${REGISTRY}/${tag}`;
+    };
 }
 
-const cmds = {
-    base: buildBase,
-    push_base: pushBase,
-    binary: buildBinary,
-    push_binary: pushBinary,
-    container: buildContainer,
-    push_container: pushContainer,
-    container_slim: buildContainerSlim,
-    push_container_slim: pushContainerSlim,
-};
+async function exec(tasks: string[], baseImage: string, baseVersion: string) {
+    const cmds = {
+        base: buildBase(baseImage, baseVersion),
+        push_base: push(baseTag(baseImage, baseVersion)),
+        binary: buildBinary(baseImage, baseVersion),
+        push_binary: push(binaryTag(baseImage, baseVersion)),
+        container: buildContainer(baseImage, baseVersion),
+        push_container: push(containerTag(baseImage, baseVersion)),
+        container_slim: buildContainerSlim(baseImage, baseVersion),
+        push_container_slim: push(containerSlimTag(baseImage, baseVersion)),
+    };
+
+    await utils.execute(cmds, deps, tasks);
+}
 
 const deps = {
     push_base: ["base"],
@@ -117,6 +104,25 @@ const deps = {
     push_container: ["container"],
     container_slim: ["base"],
     push_container_slim: ["container_slim"]
-} as const satisfies Dependencies<typeof cmds>;
+} as const;
 
-await utils.execute(cmds, deps, Deno.args);
+const tasks = args.positional[0] === null ? [] : [args.positional[0]];
+
+const ALPINE_VERSION = "3.19";
+const UBUNTU_VERSION = "22.04";
+
+switch (schemaId) {
+    case 0: {
+        const version = args.options["--version"] ?? (args.options["--base"] === "alpine" ? ALPINE_VERSION : UBUNTU_VERSION);
+        await exec(tasks, args.options["--base"], version);
+        break;
+    }
+    case 1: {
+        await Promise.all([
+            exec(tasks, "alpine", ALPINE_VERSION),
+            exec(tasks, "ubuntu", UBUNTU_VERSION)
+        ]);
+        break;
+    }
+}
+
