@@ -1,9 +1,18 @@
 import $ from "https://deno.land/x/dax@0.39.1/mod.ts";
-import { utils } from "https://raw.githubusercontent.com/maemon4095/deno_make/main/mod.ts";
+import { utils } from "https://raw.githubusercontent.com/maemon4095/deno_make/f8c755ba9f3ca6fea39f9705d119e846ec0e9490/mod.ts";
 import { parse, patterns } from "https://raw.githubusercontent.com/maemon4095/ts_components/466b504fa02c7e0b03026a33f56437ea22a02f8b/parse/mod.ts";
 
 const [schemaId, args] = parse(
     [
+        {
+            positional: [patterns.optional(patterns.str)],
+            options: {
+                ["--base"]: patterns.choice("alpine", "ubuntu"),
+                ["--version"]: patterns.optional(patterns.str),
+                ["--cache-from"]: patterns.str,
+                ["--cache-to"]: patterns.str
+            }
+        },
         {
             positional: [patterns.optional(patterns.str)],
             options: {
@@ -25,6 +34,16 @@ const CONTAINER_NAME = "satysfi-container";
 
 const REGISTRY = "ghcr.io/maemon4095";
 
+const CACHE_ARGS = (() => {
+    if (schemaId !== 0) {
+        return "";
+    }
+    const from = args.options["--cache-from"];
+    const to = args.options["--cache-to"];
+
+    return `--cache-from=${from} --cache-to=${to}`;
+})();
+
 function baseTag(baseImage: string, baseVersion: string) {
     return `${BASE_NAME}:${baseImage}-${baseVersion}`;
 }
@@ -33,7 +52,7 @@ function buildBase(baseImage: string, baseVersion: string) {
     const context = "./images/base";
     const TAG = baseTag(baseImage, baseVersion);
     return async () => {
-        await $.raw`docker build --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
+        await $.raw`docker build ${CACHE_ARGS} --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
     };
 }
 
@@ -45,7 +64,7 @@ function buildBinary(baseImage: string, baseVersion: string) {
     const context = "./images/binary";
     const TAG = binaryTag(baseImage, baseVersion);
     return async () => {
-        await $.raw`docker build --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
+        await $.raw`docker build ${CACHE_ARGS} --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
     };
 }
 
@@ -58,7 +77,7 @@ function buildContainer(baseImage: string, baseVersion: string) {
     const TAG = containerTag(baseImage, baseVersion);
 
     return async () => {
-        await $.raw`docker build --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
+        await $.raw`docker build ${CACHE_ARGS} --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
     };
 }
 
@@ -70,7 +89,7 @@ function buildContainerSlim(baseImage: string, baseVersion: string) {
     const context = "./images/container";
     const TAG = containerSlimTag(baseImage, baseVersion);
     return async () => {
-        await $.raw`docker build --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}-slim.Dockerfile -t local/${TAG} ${context}`;
+        await $.raw`docker build ${CACHE_ARGS} --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}-slim.Dockerfile -t local/${TAG} ${context}`;
     };
 }
 
@@ -112,12 +131,13 @@ const ALPINE_VERSION = "3.19";
 const UBUNTU_VERSION = "22.04";
 
 switch (schemaId) {
-    case 0: {
+    case 0:
+    case 1: {
         const version = args.options["--version"] ?? (args.options["--base"] === "alpine" ? ALPINE_VERSION : UBUNTU_VERSION);
         await exec(tasks, args.options["--base"], version);
         break;
     }
-    case 1: {
+    case 2: {
         await Promise.all([
             exec(tasks, "alpine", ALPINE_VERSION),
             exec(tasks, "ubuntu", UBUNTU_VERSION)
