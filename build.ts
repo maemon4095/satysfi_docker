@@ -52,7 +52,7 @@ function buildBase(baseImage: string, baseVersion: string) {
     const context = "./images/base";
     const TAG = baseTag(baseImage, baseVersion);
     return async () => {
-        await $.raw`docker build ${CACHE_ARGS} --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
+        await $.raw`docker buildx build ${CACHE_ARGS} --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
     };
 }
 
@@ -64,7 +64,7 @@ function buildBinary(baseImage: string, baseVersion: string) {
     const context = "./images/binary";
     const TAG = binaryTag(baseImage, baseVersion);
     return async () => {
-        await $.raw`docker build ${CACHE_ARGS} --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
+        await $.raw`docker buildx build ${CACHE_ARGS} --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
     };
 }
 
@@ -77,7 +77,7 @@ function buildContainer(baseImage: string, baseVersion: string) {
     const TAG = containerTag(baseImage, baseVersion);
 
     return async () => {
-        await $.raw`docker build ${CACHE_ARGS} --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
+        await $.raw`docker buildx build ${CACHE_ARGS} --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}.Dockerfile -t local/${TAG} ${context}`;
     };
 }
 
@@ -89,7 +89,7 @@ function buildContainerSlim(baseImage: string, baseVersion: string) {
     const context = "./images/container";
     const TAG = containerSlimTag(baseImage, baseVersion);
     return async () => {
-        await $.raw`docker build ${CACHE_ARGS} --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}-slim.Dockerfile -t local/${TAG} ${context}`;
+        await $.raw`docker buildx build ${CACHE_ARGS} --build-arg="BASE_VERSION=${baseVersion}" -f ${context}/${baseImage}-slim.Dockerfile -t local/${TAG} ${context}`;
     };
 }
 
