@@ -1,9 +1,8 @@
-FROM alpine:3.19
+ARG BASE_VERSION
+FROM ubuntu:${BASE_VERSION}
 
-# bash for dune for satysfi
-# perl-utils for shasum for satysfi-dist
-RUN apk update && \
-    apk add curl unzip patch build-base git bash perl-utils
+RUN apt update -y && \
+    apt install -y git unzip curl build-essential
 
 # ocaml setup
 ARG OCAML_VERSION=4.14.0

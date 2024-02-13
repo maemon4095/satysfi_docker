@@ -1,115 +1,28 @@
 name: build
 on:
   workflow_dispatch:
-    inputs:
-      mode:
-        description: running mode
-        required: true
-        default: "diff"
-        type: choice
-        options:
-          - all
-          - diff
   push:
     branches:
       - 'main'
     paths:
-      - 'images/**/Dockerfile*'
+      - 'images/**'
+      - '!images/**/README.md'
 
-env:
-  DELIM: ━─━─━─━─━─━
 
 jobs:
-  entry:
-    runs-on: ubuntu-latest
-    outputs:
-      mode: ${{ steps.coalesce.outputs.MODE }}
-    steps:
-      - id: coalesce
-        run: |
-          MODE="${{ inputs.mode || 'diff' }}"
-          echo "MODE=${MODE}" >> "$GITHUB_OUTPUT"
-
-  all:
-    runs-on: ubuntu-latest
-    needs: entry
-    if: ${{ needs.entry.outputs.mode == 'all' }}
-    outputs:
-      targets: ${{ steps.collect.outputs.TARGETS }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Collect all Dockerfiles
-        id: collect
-        run: |
-          FILES=$(find ./images -wholename **/Dockerfile*)
-          echo "=====files====="
-          echo "${FILES}"
-          echo "==============="
-          {
-            echo "targets<<${{ env.DELIM }}"
-            echo "${FILES}"
-            echo "${{ env.DELIM }}"
-          } >> "$GITHUB_OUTPUT"
-
-  diff:
-    runs-on: ubuntu-latest
-    needs: entry
-    if: ${{ needs.entry.outputs.mode == 'diff' }}
-    outputs:
-      targets: ${{ steps.collect.outputs.TARGETS }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - # FIXME: 差分を集めているため，存在しなくなったファイルも含まれてしまう．
-        # FIXME: 一度ビルドに失敗すると差分に含まれなくなる．
-        name: Collect changed Dockerfiles
-        id: collect
-        run: |
-          DIFF=$(git diff --name-only HEAD^ | grep --color=never Dockerfile || echo "")
-          echo "=====diffs====="
-          echo "${DIFF}"
-          echo "==============="
-          {
-            echo "targets<<${{ env.DELIM }}"
-            echo "${DIFF}"
-            echo "${{ env.DELIM }}"
-          } >> "$GITHUB_OUTPUT"
-
-  join:
-    runs-on: ubuntu-latest
-    needs: [diff, all]
-    if: ${{ !cancelled() && !failure() }} 
-    env:
-      TARGETS: ${{ needs.all.outputs.targets || needs.diff.outputs.targets }}
-    outputs:
-      targets: ${{ steps.join.outputs.targets }}
-    steps:
-      - name: join and format targets
-        id: join
-        run: |
-          if [ -n "${{ env.TARGETS }}" ]; then
-            TARGETS=$(echo "${{ env.TARGETS }}" | awk -v ORS="" 'BEGIN { print "[" } NR>1 { print "," } { print "\"" $0 "\"" } END { print "]" }')
-
-            echo "${TARGETS}"
-            
-            echo "targets=${TARGETS}" >> "$GITHUB_OUTPUT"
-          fi
-
   build:
     runs-on: ubuntu-latest
-    needs: join
-    if: ${{ !cancelled() && !failure() && needs.join.outputs.targets != 0 }} 
-    strategy:
-      matrix:
-        target: ${{ fromJson(needs.join.outputs.targets) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: satysfi-buildx-${{ hashFiles('**/*.Dockerfile') }}
+          restore-keys: |
+            satysfi-buildx-
         
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -124,29 +37,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate tag
-        run: |
-          DIR=$(dirname "${{ matrix.target }}")
-          FILENAME=$(basename "${{ matrix.target }}")
-          EXT=$(echo $FILENAME | sed 's/^[^\.]*\.\{0,1\}//')
-          IMAGE_NAME="satysfi-$(realpath --relative-to="images" "$DIR" | sed "s|/|-|")"
-          TAG="ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:${EXT:=latest}"
-          
-          echo "build ${{ matrix.target }} as ${TAG}"
-
-          echo "BUILD_CTX=${DIR}" >> "$GITHUB_ENV"
-          echo "DIST_TAG=${TAG}" >> "$GITHUB_ENV"
+      - name: Set up Deno
+        uses: denoland/setup-deno@v1
 
       - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: ${{ env.BUILD_CTX }}
-          file: ${{ matrix.target  }}
-          push: true
-          tags: ${{ env.DIST_TAG }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
-          
+        run: deno run -A build.ts
+
       - # Temp fix
         # https://github.com/docker/build-push-action/issues/252
         # https://github.com/moby/buildkit/issues/1896

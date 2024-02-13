@@ -1,12 +1,13 @@
-FROM ghcr.io/maemon4095/satysfi-base:ubuntu AS build
+ARG BASE_VERSION
+FROM local/satysfi-base:alpine-${BASE_VERSION} AS build
 
 # satysfi setup
 ARG SATYSFI_VERSION=0.0.10
 ARG SATYROGRAPHOS_VERSION=0.0.2.13
 
-RUN opam update
+RUN apk add --no-cache linux-headers
 
-RUN opam install camlimages.5.0.4-1 satysfi.${SATYSFI_VERSION} satysfi-dist.${SATYSFI_VERSION} satyrographos.${SATYROGRAPHOS_VERSION}
+RUN opam update && opam install camlimages.5.0.4-1 satysfi.${SATYSFI_VERSION} satysfi-dist.${SATYSFI_VERSION} satyrographos.${SATYROGRAPHOS_VERSION}
 RUN eval $(opam env) && \
     satyrographos install --copy && \
     mkdir -p /artifacts && \
@@ -20,9 +21,7 @@ RUN git clone https://github.com/monaqa/satysfi-language-server.git && cd satysf
     /root/.cargo/bin/cargo build --bins --release --target-dir target && \
     mv ./target/release/satysfi-language-server /artifacts/
 
-
-FROM ubuntu:22.04
-
+FROM alpine:${BASE_VERSION}
 COPY --from=build /artifacts/* /usr/bin
 
 RUN mkdir /workspace

@@ -1,6 +1,10 @@
-FROM ubuntu:22.04
-RUN apt update -y && \
-    apt install -y git unzip curl build-essential
+ARG BASE_VERSION
+FROM alpine:${BASE_VERSION}
+
+# bash for dune for satysfi
+# perl-utils for shasum for satysfi-dist
+RUN apk update && \
+    apk add curl unzip patch build-base git bash perl-utils
 
 # ocaml setup
 ARG OCAML_VERSION=4.14.0

@@ -1,7 +1,8 @@
-FROM ghcr.io/maemon4095/satysfi-container:alpine-slim
+ARG BASE_VERSION
+FROM local/satysfi-container:ubuntu-${BASE_VERSION}-slim
 
 # install fonts
-RUN apk add --no-cache fontconfig && mkdir -p /usr/local/share/fonts/
+RUN apt update -y && apt install -y fontconfig && mkdir -p /usr/local/share/fonts/
 
 ## install HackGen
 ARG HACKGEN_VER=v2.8.0
