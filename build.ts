@@ -1,6 +1,6 @@
 import $ from "https://deno.land/x/dax@0.39.1/mod.ts";
 import { utils } from "https://raw.githubusercontent.com/maemon4095/deno_make/f8c755ba9f3ca6fea39f9705d119e846ec0e9490/mod.ts";
-import { parse, patterns } from "https://raw.githubusercontent.com/maemon4095/ts_components/466b504fa02c7e0b03026a33f56437ea22a02f8b/parse/mod.ts";
+import { parse, patterns } from "https://raw.githubusercontent.com/maemon4095/ts_components/7e6ed664ee5339c071ae0a2e603bd793dfa5b229/parse/mod.ts";
 
 const [schemaId, args] = parse(
     [
